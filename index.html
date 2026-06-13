@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Информационная Безопасность — Анализ методов 2FA</title>
+    <style>
+        /* Базовые настройки и футуристичный фон */
+       body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    /* Теперь браузер будет искать картинку прямо в той же папке */
+    background: #060913 url('bg-image.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #f1f5f9;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    backdrop-filter: blur(5px);
+}
+        /* Эффект Glassmorphism (эффект матового стекла) для шапки */
+        header {
+            background: rgba(17, 24, 39, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            padding: 35px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            color: #fff;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+        }
+
+        header p {
+            margin: 12px 0 0 0;
+            color: #38bdf8;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 50px auto;
+            padding: 0 25px;
+        }
+
+        .section-title {
+            text-align: center;
+            color: #fff;
+            font-size: 26px;
+            margin-top: 60px;
+            margin-bottom: 35px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #38bdf8, #a855f7);
+            border-radius: 2px;
+            margin: 12px auto 0;
+            box-shadow: 0 0 8px #38bdf8;
+        }
+
+        /* Сетка и стеклянные карточки */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Плавное неоновое свечение при наведении */
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 12px 40px 0 rgba(56, 189, 248, 0.25);
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: #cbd5e1;
+            font-size: 14.5px;
+            margin-bottom: 0;
+        }
+
+        /* Стильные яркие бейджи */
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .badge.low { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .badge.medium { background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .badge.high { background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+        /* Футуристичная неоновая таблица */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 50px;
+            background: rgba(17, 24, 39, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14.5px;
+        }
+
+        th, td {
+            padding: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background-color: rgba(30, 41, 59, 0.6);
+            color: #38bdf8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12.5px;
+            letter-spacing: 1px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Интерактивный Квиз в стиле Glassmorphism */
+        .quiz-wrapper {
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 35px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .question {
+            font-size: 19px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 25px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .option-label {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #e2e8f0;
+        }
+
+        .option-label:hover {
+            background: rgba(56, 189, 248, 0.08);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: #fff;
+        }
+
+        .option-label input {
+            accent-color: #38bdf8; /* Окрашивание радио-кнопки в бирюзовый */
+            margin: 0;
+            width: 17px;
+            height: 17px;
+        }
+
+        /* Кнопка с градиентом и свечением */
+        .btn-submit {
+            margin-top: 25px;
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
+            color: #fff;
+            border: none;
+            padding: 14px 30px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+
+        .feedback {
+            margin-top: 25px;
+            padding: 18px;
+            border-radius: 10px;
+            display: none;
+            font-size: 14.5px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .feedback.success {
+            background-color: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+        }
+
+        .feedback.error {
+            background-color: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+
+        /* Стеклянный подвал */
+        footer {
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 25px;
+            margin-top: 80px;
+            color: #94a3b8;
+            font-size: 13.5px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>КОЛЛЕДЖ «IT. МОСКВА»</h1>
+        <p>Индивидуальный проект по информационной безопасности • Группа И1-6-25</p>
+    </header>
+
+    <div class="container">
+        
+        <h2 class="section-title">1. Триада факторов аутентификации</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>Знаю (Фактор знания)</h3>
+                <p>Информация, которую пользователь хранит в памяти. Сюда относятся пароли, сложные PIN-коды, кодовые фразы. Самый уязвимый фактор, подверженный взлому перебором и фишингу.</p>
+            </div>
+            <div class="card">
+                <h3>Имею (Фактор владения)</h3>
+                <p>Физический или виртуальный объект, находящийся в монопольном распоряжении. Смартфон (SMS/Push), приложения-генераторы (TOTP), аппаратные USB-ключи.</p>
+            </div>
+            <div class="card">
+                <h3>Являюсь (Фактор свойства)</h3>
+                <p>Уникальные биометрические параметры человека. Снятие отпечатка пальца, сканирование лица (Face ID), геометрия радужной оболочки глаза. Хранится локально на устройстве.</p>
+            </div>
+        </div>
+
+        <h2 class="section-title">2. Анализ методов защиты</h2>
+        <div class="grid">
+            <div class="card">
+                <span class="badge low">Низкая защита</span>
+                <h3>SMS-сообщения</h3>
+                <p>Популярно, но крайне небезопасно. Уязвимо к атакам типа SIM-swapping (мошеннический дубликат SIM) и перехвату трафика через бреши в протоколах сотовых сетей SS7.</p>
+            </div>
+            <div class="card">
+                <span class="badge medium">Средняя защита</span>
+                <h3>Приложения TOTP</h3>
+                <p>Генераторы кодов (Google Authenticator), меняющие комбинацию каждые 30 секунд. Работают офлайн. Уязвимы перед фишингом в реальном времени.</p>
+            </div>
+            <div class="card">
+                <span class="badge high">Максимальная защита</span>
+                <h3>Аппаратные ключи FIDO2</h3>
+                <p>Физические криптографические токены (YubiKey). Не передают коды, работают по асимметричному шифрованию и аппаратно блокируют вход на фишинговых сайтах.</p>
+            </div>
+        </div>
+
+        <h2 class="section-title">3. Сравнительный анализ</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Метод 2FA</th>
+                        <th>Надежность</th>
+                        <th>Зависимость от сети</th>
+                        <th>Устойчивость к фишингу</th>
+                        <th>Стоимость</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SMS и звонки</strong></td>
+                        <td style="color:#f87171; font-weight: 600;">Низкая</td>
+                        <td>Да (нужна сотовая связь)</td>
+                        <td>Нет</td>
+                        <td>Бесплатно</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TOTP (Аутентификаторы)</strong></td>
+                        <td style="color:#fbbf24; font-weight: 600;">Средняя</td>
+                        <td>Нет (полный офлайн)</td>
+                        <td>Нет</td>
+                        <td>Бесплатно</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Push + Биометрия</strong></td>
+                        <td style="color:#34d399; font-weight: 600;">Высокая</td>
+                        <td>Да (нужен интернет)</td>
+                        <td>Частично</td>
+                        <td>Бесплатно</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Криптоключи (FIDO2)</strong></td>
+                        <td style="color:#34d399; font-weight: bold; text-shadow: 0 0 8px rgba(52,211,153,0.4);">Максимальная</td>
+                        <td>Нет</td>
+                        <td style="color:#34d399; font-weight: bold;">Да (Полная)</td>
+                        <td style="color:#f87171;">Высокая</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="section-title">4. Проверьте свои знания в ИБ</h2>
+        <div class="quiz-wrapper">
+            <div class="question" id="quiz-question">Загрузка вопроса...</div>
+            <div class="options" id="quiz-options">
+                </div>
+            <button class="btn-submit" id="btn-action" onclick="checkAnswer()">Проверить ответ</button>
+            <div class="feedback" id="quiz-feedback"></div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>Проект выполнили студенты: Бойка Василиса, Торосян Ангелина<br>Преподаватель: Ксения Набокова Александрова</p>
+    </footer>
+
+    <script>
+        const quizData = [
+            {
+                question: "Какая основная уязвимость у двухфакторной аутентификации через обычные SMS-коды?",
+                options: [
+                    "Высокая стоимость отправки для пользователя",
+                    "Перехват кодов через атаку SIM-swapping или уязвимости сетей SS7",
+                    "Коды работают только при наличии включенного Bluetooth",
+                    "Ограничение на длину кода в 4 символа"
+                ],
+                correct: 1,
+                explanation: "Правильно! SMS-сообщения уязвимы к перевыпуску SIM-карты мошенниками (SIM-swapping) и к техническому перехвату на уровне устаревших протоколов связи SS7."
+            },
+            {
+                question: "Почему аппаратные ключи (например, YubiKey) считаются полностью устойчивыми к фишингу?",
+                options: [
+                    "Они выполнены из сверхпрочного титанового сплава",
+                    "Они требуют ввода отпечатка пальца при каждом нажатии",
+                    "Ключ проверяет домен сайта и не подпишет запрос на фишинговом адресе",
+                    "Они работают без использования интернета"
+                ],
+                correct: 2,
+                explanation: "Отлично! Стандарты FIDO2/WebAuthn привязывают криптографический ключ к конкретному домену. Если вы случайно зашли на фишинговый сайт, ключ поймет подмену адреса и заблокирует операцию."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+
+        function loadQuestion() {
+            const currentQuiz = quizData[currentQuestionIndex];
+            document.getElementById("quiz-question").innerText = currentQuiz.question;
+            
+            const optionsContainer = document.getElementById("quiz-options");
+            optionsContainer.innerHTML = "";
+            
+            currentQuiz.options.forEach((option, index) => {
+                const label = document.createElement("label");
+                label.className = "option-label";
+                label.innerHTML = `<input type="radio" name="quiz-option" value="${index}"> ${option}`;
+                optionsContainer.appendChild(label);
+            });
+
+            const feedback = document.getElementById("quiz-feedback");
+            feedback.style.display = "none";
+            feedback.className = "feedback";
+            
+            const actionBtn = document.getElementById("btn-action");
+            actionBtn.innerText = "Проверить ответ";
+            actionBtn.setAttribute("onclick", "checkAnswer()");
+        }
+
+        function checkAnswer() {
+            const selectedOption = document.querySelector('input[name="quiz-option"]:checked');
+            if (!selectedOption) {
+                alert("Пожалуйста, выберите один из вариантов ответа!");
+                return;
+            }
+
+            const answerIndex = parseInt(selectedOption.value);
+            const currentQuiz = quizData[currentQuestionIndex];
+            const feedback = document.getElementById("quiz-feedback");
+
+            feedback.style.display = "block";
+            if (answerIndex === currentQuiz.correct) {
+                feedback.className = "feedback success";
+                feedback.innerText = currentQuiz.explanation;
+            } else {
+                feedback.className = "feedback error";
+                feedback.innerText = "Неправильно. Попробуйте проанализировать уязвимости факторов еще раз или выберите другой вариант.";
+            }
+
+            const actionBtn = document.getElementById("btn-action");
+            if (currentQuestionIndex < quizData.length - 1) {
+                actionBtn.innerText = "Следующий вопрос";
+                actionBtn.setAttribute("onclick", "nextQuestion()");
+            } else {
+                actionBtn.innerText = "Пройти тест заново";
+                actionBtn.setAttribute("onclick", "restartQuiz()");
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>
